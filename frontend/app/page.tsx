@@ -204,6 +204,12 @@ export default async function Home() {
             <p className="text-gray-400">
               {article.summary}
             </p>
+            
+            <p className="text-sm text-gray-500 mt-4">
+              Published on:{" "}
+              {new Date(article.published_at).toLocaleString()}
+            </p>
+
           </div>
         ))}
       </div>
