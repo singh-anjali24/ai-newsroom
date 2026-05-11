@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "AI Newsroom — AI-Powered News Discovery",
-  description: "Autonomous AI-powered news discovery, summarization, and publishing.",
+  description:
+    "Autonomous AI-powered news discovery, summarization, and publishing.",
 };
 
 export default function RootLayout({
@@ -25,9 +26,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} dark`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("theme")==="light")document.documentElement.classList.remove("dark")}catch(e){}`,
+          }}
+        />
+      </head>
+      <body className="min-h-screen font-sans antialiased">{children}</body>
     </html>
   );
 }
