@@ -7,7 +7,7 @@ const { insertArticle } = require("./dbWriter");
  * Coordinates the full pipeline: fetch → summarize → store.
  */
 async function run() {
-  console.log("\n[Agent] Starting news ingestion pipeline...\n");
+  console.log(`\n[Agent] Starting news ingestion pipeline at ${new Date().toISOString()}\n`);
 
   let articles;
   try {
