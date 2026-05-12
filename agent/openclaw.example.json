@@ -1,0 +1,32 @@
+{
+  "agents": {
+    "defaults": {
+      "workspace": "/home/azureuser/ai-newsroom/agent",
+      "model": "ollama/ministral-3:3b"
+    }
+  },
+  "models": {
+    "providers": {
+      "ollama": {
+        "baseUrl": "https://ollama.com",
+        "apiKey": "your-ollama-cloud-api-key",
+        "models": [
+          {
+            "id": "ministral-3:3b",
+            "name": "Ministral 3B"
+          }
+        ]
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "your-telegram-bot-token",
+      "dmPolicy": "pairing"
+    }
+  },
+  "gateway": {
+    "mode": "local"
+  }
+}

@@ -2,3 +2,7 @@ assignment.md
 *.png
 image
 openclaw.json
+
+# Environment files with secrets
+agent/.env
+frontend/.env.local

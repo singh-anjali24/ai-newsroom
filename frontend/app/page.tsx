@@ -27,7 +27,8 @@ export default async function Home() {
   const { data: articles, error } = await supabase
     .from("articles")
     .select("*")
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .limit(15);
 
   const articleCount = articles?.length ?? 0;
   const lastUpdated = articles?.[0]?.created_at || articles?.[0]?.published_at;
