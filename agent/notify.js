@@ -4,6 +4,7 @@ dns.setDefaultResultOrder('ipv4first');
 require('dotenv').config();
 
 const { run } = require('./agents/newsAgent');
+const { checkHealth } = require('./runners/health');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -37,6 +38,18 @@ run().then(async () => {
     '📊 Total processed: ' + (inserted + skipped);
 
   await sendTelegram(msg);
+
+  // Run health check — only alert if something is wrong
+  console.log = origLog;
+  console.error = origErr;
+  const health = await checkHealth();
+  if (health.hasFailure) {
+    const failItems = health.results
+      .filter((r) => r.status === 'fail')
+      .map((r) => '• ' + r.name + ': ' + r.detail)
+      .join('\n');
+    await sendTelegram('🚨 *Health Alert*\n\n' + failItems);
+  }
 }).catch(async (err) => {
   await sendTelegram('❌ Pipeline failed: ' + err.message);
 });
