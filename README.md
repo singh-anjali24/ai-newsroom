@@ -218,8 +218,10 @@ crontab -e
 Add this line:
 
 ```
-0 */5 * * * cd /home/azureuser/ai-newsroom/agent && /usr/bin/node notify.js >> /home/azureuser/agent.log 2>&1 && tail -500 /home/azureuser/agent.log > /home/azureuser/agent.log.tmp && mv /home/azureuser/agent.log.tmp /home/azureuser/agent.log
+0 */5 * * * /home/azureuser/ai-newsroom/agent/cron-run.sh
 ```
+
+This script triggers the pipeline through the OpenClaw agent runtime, sends a Telegram notification, runs a health check, and rotates logs.
 
 ## Observability
 
