@@ -2,6 +2,7 @@ assignment.md
 *.png
 image
 openclaw.json
+node_modules/
 
 # Environment files with secrets
 agent/.env

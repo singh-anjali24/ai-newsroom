@@ -1,7 +1,8 @@
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
-require('dotenv').config();
-const { fetchArticles } = require('./agents/rssFetcher');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const { fetchArticles } = require('../agents/rssFetcher');
 
 fetchArticles().then(articles => {
   console.log('[RSS Agent] Fetched ' + articles.length + ' articles:');
