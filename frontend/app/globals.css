@@ -11,40 +11,52 @@ html {
 
 /* Light theme */
 :root {
-  --bg: #ffffff;
-  --bg-secondary: #f9fafb;
+  --bg: #fafafa;
+  --bg-secondary: #ffffff;
   --bg-card: #ffffff;
-  --bg-card-hover: #f8fafc;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --border: #e2e8f0;
-  --border-hover: #cbd5e1;
+  --bg-card-hover: #ffffff;
+  --text-primary: #0a0a0a;
+  --text-secondary: #525252;
+  --text-muted: #a3a3a3;
+  --border: #e5e5e5;
+  --border-hover: #d4d4d4;
   --accent: #6366f1;
-  --accent-light: #eef2ff;
+  --accent-soft: #eef2ff;
   --accent-text: #4f46e5;
-  --badge-bg: #f1f5f9;
-  --badge-text: #475569;
-  --badge-border: #e2e8f0;
+  --accent-glow: rgba(99, 102, 241, 0.08);
+  --badge-bg: #f5f5f5;
+  --badge-text: #525252;
+  --badge-border: #e5e5e5;
+  --hero-gradient: linear-gradient(135deg, #eef2ff 0%, #faf5ff 50%, #fefce8 100%);
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  --card-shadow-hover: 0 10px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+  --stat-bg: #f5f5f5;
+  --pipeline-line: #e5e5e5;
 }
 
 /* Dark theme */
 .dark {
   --bg: #09090b;
-  --bg-secondary: #111113;
-  --bg-card: #111113;
-  --bg-card-hover: #18181c;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #52525e;
-  --border: #1c1c22;
-  --border-hover: #2a2a33;
+  --bg-secondary: #0f0f12;
+  --bg-card: #111114;
+  --bg-card-hover: #16161a;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
+  --border: #1e1e24;
+  --border-hover: #2c2c35;
   --accent: #818cf8;
-  --accent-light: rgba(99, 102, 241, 0.1);
+  --accent-soft: rgba(99, 102, 241, 0.08);
   --accent-text: #a5b4fc;
+  --accent-glow: rgba(129, 140, 248, 0.06);
   --badge-bg: #18181c;
-  --badge-text: #94a3b8;
+  --badge-text: #a1a1aa;
   --badge-border: #27272f;
+  --hero-gradient: linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(139,92,246,0.03) 50%, rgba(99,102,241,0.02) 100%);
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  --card-shadow-hover: 0 10px 40px rgba(0,0,0,0.4), 0 0 1px rgba(129,140,248,0.1);
+  --stat-bg: #111114;
+  --pipeline-line: #1e1e24;
 }
 
 body {
@@ -53,34 +65,84 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
+/* Cards */
 .article-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .article-card:hover {
-  background: var(--bg-card-hover);
   border-color: var(--border-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-3px);
 }
 
-.dark .article-card:hover {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+.featured-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
+.featured-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #a78bfa, var(--accent));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.featured-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-3px);
+}
+
+.featured-card:hover::before {
+  opacity: 1;
+}
+
+/* GitHub link */
 .github-link {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  color: var(--text-secondary);
+  color: var(--text-muted);
+  transition: all 0.2s;
 }
 
 .github-link:hover {
-  background: var(--bg-card-hover);
   border-color: var(--border-hover);
   color: var(--text-primary);
 }
 
+/* Pipeline step */
+.pipeline-step {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s;
+}
+
+.pipeline-step:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--card-shadow);
+}
+
+/* Stat card */
+.stat-card {
+  background: var(--stat-bg);
+  border: 1px solid var(--border);
+}
+
+/* Line clamp */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -93,4 +155,14 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Fade in animation */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.6s ease-out forwards;
 }

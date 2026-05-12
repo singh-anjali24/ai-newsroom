@@ -7,3 +7,4 @@ node_modules/
 # Environment files with secrets
 agent/.env
 frontend/.env.local
+agent/agent.log
