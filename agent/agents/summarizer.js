@@ -7,7 +7,7 @@ const ollama = new Ollama({
   },
 });
 
-const MODEL = "ministral-3:3b";
+const MODEL = "ministral-3:8b";
 
 /**
  * Generates a concise 2-sentence summary of the given text using Ollama Cloud.
