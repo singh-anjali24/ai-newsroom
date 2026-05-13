@@ -2,7 +2,7 @@
   "agents": {
     "defaults": {
       "workspace": "/home/azureuser/ai-newsroom/agent",
-      "model": "ollama/ministral-3:3b"
+      "model": "ollama/ministral-3:8b"
     }
   },
   "models": {
@@ -12,8 +12,8 @@
         "apiKey": "your-ollama-cloud-api-key",
         "models": [
           {
-            "id": "ministral-3:3b",
-            "name": "Ministral 3B"
+            "id": "ministral-3:8b",
+            "name": "Ministral 8B"
           }
         ]
       }
