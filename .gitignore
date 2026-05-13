@@ -8,3 +8,6 @@ node_modules/
 agent/.env
 frontend/.env.local
 agent/agent.log
+.playwright-mcp/
+*.pdf
+pdf-gen/
