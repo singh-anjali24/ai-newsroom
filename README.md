@@ -62,6 +62,7 @@ Each agent is also exposed as an OpenClaw skill, invocable via Telegram:
 | fetch-rss | `/fetch-rss` | Fetch RSS articles only |
 | summarize | `/summarize` | Summarize any text |
 | db-status | `/db-status` | Check article count and latest entries |
+| health | `/health` | System health check (Supabase, Ollama, ingestion, uptime) |
 
 ## Project Structure
 
@@ -76,14 +77,17 @@ ai-newsroom/
 │   ├── runners/               # Standalone wrappers for OpenClaw skills
 │   │   ├── fetch.js           # Run RSS fetcher independently
 │   │   ├── summarize.js       # Run summarizer independently
-│   │   └── status.js          # Check database status
+│   │   ├── status.js          # Check database status
+│   │   └── health.js          # System health check
 │   ├── skills/                # OpenClaw skill definitions
 │   │   ├── fetch-news/        # Full pipeline skill
 │   │   ├── fetch-rss/         # RSS-only skill
 │   │   ├── summarize/         # Summarization skill
-│   │   └── db-status/         # Database status skill
+│   │   ├── db-status/         # Database status skill
+│   │   └── health/            # Health check skill
 │   ├── index.js               # Main entry point
-│   ├── notify.js              # Cron entry with Telegram notifications
+│   ├── notify-only.js         # Post-run Telegram notifications + health alerts
+│   ├── cron-run.sh            # Cron entry: runs pipeline via OpenClaw, notifies, rotates logs
 │   ├── openclaw.example.json  # OpenClaw config template
 │   ├── .env.example           # Environment variables template
 │   └── package.json
@@ -99,6 +103,7 @@ ai-newsroom/
 │   ├── .env.example           # Frontend env template
 │   └── package.json
 ├── schema.sql                 # Database schema for Supabase
+├── LICENSE                    # MIT License
 └── README.md
 ```
 
@@ -115,7 +120,7 @@ ai-newsroom/
 
 ### 1. Database Setup
 
-Create a Supabase project, then run `schema.sql` in the Supabase SQL Editor:
+Create a Supabase project, then run the full `schema.sql` in the Supabase SQL Editor:
 
 ```sql
 CREATE TABLE IF NOT EXISTS articles (
@@ -126,6 +131,15 @@ CREATE TABLE IF NOT EXISTS articles (
   source TEXT,
   published_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at DESC);
+
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+  id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  last_run_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  articles_found INT DEFAULT 0,
+  articles_inserted INT DEFAULT 0
 );
 ```
 
@@ -189,7 +203,10 @@ Copy and configure OpenClaw:
 ```bash
 cp agent/openclaw.example.json ~/.openclaw/openclaw.json
 # Edit ~/.openclaw/openclaw.json with your Ollama API key and Telegram bot token
+# Update the workspace path to match your VPS user's home directory
 ```
+
+> **Note:** The skill definitions in `agent/skills/` and `cron-run.sh` use hardcoded paths (`/home/azureuser/ai-newsroom/agent/...`). If your VPS username or clone location differs, update these paths in each `SKILL.md` file and in `cron-run.sh`.
 
 Run the doctor and install the gateway:
 
