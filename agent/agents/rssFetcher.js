@@ -3,9 +3,9 @@ const Parser = require("rss-parser");
 const parser = new Parser();
 
 const RSS_FEEDS = [
-  { url: "https://news.google.com/rss/search?q=AI", defaultSource: "Google News" },
-  { url: "https://news.google.com/rss/search?q=artificial+intelligence+LLM", defaultSource: "Google News" },
-  { url: "https://news.google.com/rss/search?q=OpenAI+OR+Anthropic+OR+Google+AI", defaultSource: "Google News" },
+  { url: "https://news.google.com/rss/search?q=AI+when:1d", defaultSource: "Google News" },
+  { url: "https://news.google.com/rss/search?q=artificial+intelligence+LLM+when:1d", defaultSource: "Google News" },
+  { url: "https://news.google.com/rss/search?q=OpenAI+OR+Anthropic+OR+Google+AI+when:1d", defaultSource: "Google News" },
 ];
 
 const ARTICLES_PER_FEED = 10;
