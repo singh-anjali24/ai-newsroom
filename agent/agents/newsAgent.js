@@ -1,5 +1,6 @@
 const { fetchArticles } = require("./rssFetcher");
 const { generateSummary } = require("./summarizer");
+const { categorize } = require("./categorizer");
 const { insertArticle, recordPipelineRun } = require("./dbWriter");
 
 /**
@@ -25,10 +26,13 @@ async function run() {
     console.log(`[Agent] Processing: ${item.title}`);
 
     const summary = await generateSummary(item.content);
+    const category = categorize(item.title, summary);
+    console.log(`[Agent] Category: ${category}`);
 
     const result = await insertArticle({
       title: item.title,
       summary,
+      category,
       url: item.url,
       source: item.source,
       published_at: item.published_at,

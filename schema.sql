@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS articles (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   title TEXT NOT NULL,
   summary TEXT,
+  category TEXT DEFAULT 'General',
   url TEXT NOT NULL UNIQUE,
   source TEXT,
   published_at TIMESTAMPTZ,

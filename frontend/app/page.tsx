@@ -25,29 +25,76 @@ function uniqueSources(articles: { source: string }[]): string[] {
   return [...new Set(articles.map((a) => a.source))];
 }
 
+interface Article {
+  id: number;
+  title: string;
+  summary: string;
+  category: string;
+  url: string;
+  source: string;
+  published_at: string;
+  created_at: string;
+}
+
+function groupByCategory(articles: Article[]): Record<string, Article[]> {
+  const groups: Record<string, Article[]> = {};
+  for (const article of articles) {
+    const cat = article.category || "General";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(article);
+  }
+  return groups;
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  "AI Models": "#8b5cf6",
+  "Business": "#f59e0b",
+  "Policy & Regulation": "#ef4444",
+  "Research": "#06b6d4",
+  "Ethics & Safety": "#ec4899",
+  "Products & Tools": "#10b981",
+  "General": "#6b7280",
+};
+
 export default async function Home() {
-  const [{ data: articles, error }, { data: pipelineRun }, { data: allSources }] = await Promise.all([
-    supabase
-      .from("articles")
-      .select("*")
-      .order("published_at", { ascending: false })
-      .limit(15),
-    supabase
-      .from("pipeline_runs")
-      .select("last_run_at, articles_found, articles_inserted")
-      .eq("id", 1)
-      .single(),
-    supabase
-      .from("articles")
-      .select("source"),
-  ]);
+  const [{ data: articles, error }, { data: pipelineRun }, { data: allSources }] =
+    await Promise.all([
+      supabase
+        .from("articles")
+        .select("*")
+        .order("published_at", { ascending: false })
+        .limit(15),
+      supabase
+        .from("pipeline_runs")
+        .select("last_run_at, articles_found, articles_inserted")
+        .eq("id", 1)
+        .single(),
+      supabase.from("articles").select("source"),
+    ]);
 
   const articleCount = articles?.length ?? 0;
-  const lastUpdated = pipelineRun?.last_run_at || articles?.[0]?.created_at || articles?.[0]?.published_at;
+  const lastUpdated =
+    pipelineRun?.last_run_at ||
+    articles?.[0]?.created_at ||
+    articles?.[0]?.published_at;
   const sources = allSources ? uniqueSources(allSources) : [];
+  const grouped = articles ? groupByCategory(articles as Article[]) : {};
+  const categoryOrder = [
+    "AI Models",
+    "Business",
+    "Products & Tools",
+    "Policy & Regulation",
+    "Research",
+    "Ethics & Safety",
+    "General",
+  ];
+  const sortedCategories = categoryOrder.filter((c) => grouped[c]);
 
   return (
-    <div className="min-h-screen font-sans" style={{ background: "var(--bg)" }}>
+    <div
+      className="min-h-screen font-sans"
+      style={{ background: "var(--bg)" }}
+    >
       {/* Navbar */}
       <nav
         className="sticky top-0 z-50 backdrop-blur-2xl"
@@ -56,7 +103,7 @@ export default async function Home() {
           borderBottom: "1px solid var(--border)",
         }}
       >
-        <div className="mx-auto max-w-4xl flex items-center justify-between px-5 h-14">
+        <div className="mx-auto max-w-5xl flex items-center justify-between px-5 h-14">
           <div className="flex items-center gap-2.5">
             <div className="h-8 w-8 rounded-lg flex items-center justify-center text-[10px] font-extrabold text-white bg-gradient-to-br from-indigo-500 to-violet-600 shadow-sm">
               AI
@@ -93,7 +140,11 @@ export default async function Home() {
               className="h-9 w-9 rounded-lg flex items-center justify-center github-link"
               aria-label="View source on GitHub"
             >
-              <svg className="h-[18px] w-[18px]" fill="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="h-[18px] w-[18px]"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
               </svg>
             </a>
@@ -101,22 +152,33 @@ export default async function Home() {
         </div>
       </nav>
 
-      {/* Hero — Centered */}
+      {/* Hero */}
       <section
         className="relative overflow-hidden"
         style={{ background: "var(--hero-gradient)" }}
       >
-        <div className="mx-auto max-w-4xl px-5 pt-20 pb-16 text-center">
+        <div className="mx-auto max-w-5xl px-5 pt-20 pb-16 text-center">
           <div
             className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold mb-8"
             style={{
               background: "var(--accent-soft)",
               color: "var(--accent-text)",
-              border: "1px solid color-mix(in srgb, var(--accent) 20%, transparent)",
+              border:
+                "1px solid color-mix(in srgb, var(--accent) 20%, transparent)",
             }}
           >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"
+              />
             </svg>
             Autonomous AI Pipeline
           </div>
@@ -132,15 +194,16 @@ export default async function Home() {
             className="text-base sm:text-lg leading-relaxed max-w-xl mx-auto"
             style={{ color: "var(--text-secondary)" }}
           >
-            An autonomous pipeline discovers, summarizes, and publishes AI news
-            every 5 hours — no human in the loop.
+            An autonomous pipeline discovers, summarizes, categorizes, and
+            publishes AI news every 5 hours — no human in the loop.
           </p>
 
-          {/* Stats — Centered */}
+          {/* Stats */}
           {articleCount > 0 && (
             <div className="flex flex-wrap justify-center gap-3 mt-10">
               {[
                 { label: "Articles", value: articleCount.toString() },
+                { label: "Categories", value: sortedCategories.length.toString() },
                 { label: "Sources", value: sources.length.toString() },
                 { label: "Refresh", value: "5h" },
                 ...(lastUpdated
@@ -170,7 +233,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <main className="mx-auto max-w-4xl px-5 py-12">
+      <main className="mx-auto max-w-5xl px-5 py-12">
         {/* Error State */}
         {error && (
           <div
@@ -180,16 +243,13 @@ export default async function Home() {
               border: "1px solid var(--border)",
             }}
           >
-            <div
-              className="mx-auto mb-4 h-12 w-12 rounded-full flex items-center justify-center"
-              style={{ background: "rgba(239,68,68,0.1)" }}
+            <p className="text-red-500 font-semibold">
+              Failed to load articles
+            </p>
+            <p
+              className="mt-1 text-sm"
+              style={{ color: "var(--text-muted)" }}
             >
-              <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <p className="text-red-500 font-semibold">Failed to load articles</p>
-            <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
               Please check your connection and try again.
             </p>
           </div>
@@ -204,91 +264,132 @@ export default async function Home() {
               border: "1px solid var(--border)",
             }}
           >
-            <p className="font-semibold text-lg" style={{ color: "var(--text-primary)" }}>
+            <p
+              className="font-semibold text-lg"
+              style={{ color: "var(--text-primary)" }}
+            >
               No articles yet
             </p>
-            <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
-              The pipeline runs every 5 hours. Articles will appear automatically.
+            <p
+              className="mt-2 text-sm"
+              style={{ color: "var(--text-muted)" }}
+            >
+              The pipeline runs every 5 hours. Articles will appear
+              automatically.
             </p>
           </div>
         )}
 
-        {/* Articles — 2 column grid */}
-        {!error && articleCount > 0 && (
-          <div className="grid gap-5 lg:grid-cols-2">
-            {articles!.map((article, i) => (
-              <a
-                key={article.id}
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`group flex flex-col rounded-2xl p-6 animate-fade-up ${i === 0 ? "lg:col-span-2 featured-card" : "article-card"}`}
-                style={{ animationDelay: `${i * 40}ms` }}
-              >
-                {/* Meta */}
-                <div className="flex items-center gap-2 mb-3">
-                  {i === 0 && (
-                    <span
-                      className="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest text-white"
-                      style={{ background: "var(--accent)" }}
-                    >
-                      Latest
-                    </span>
-                  )}
-                  <span
-                    className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                    style={{
-                      background: "var(--badge-bg)",
-                      color: "var(--badge-text)",
-                      border: "1px solid var(--badge-border)",
-                    }}
-                  >
-                    {article.source}
-                  </span>
-                  <span
-                    className="text-[11px] font-medium"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    {timeAgo(article.published_at)}
-                  </span>
-                </div>
-
-                {/* Title */}
+        {/* Articles grouped by category */}
+        {!error &&
+          sortedCategories.map((category) => (
+            <section key={category} className="mb-12">
+              {/* Category Header */}
+              <div className="flex items-center gap-3 mb-5">
+                <div
+                  className="h-3 w-3 rounded-full"
+                  style={{
+                    background: CATEGORY_COLORS[category] || "#6b7280",
+                  }}
+                />
                 <h2
-                  className={`font-bold leading-snug mb-2 ${i === 0 ? "text-xl sm:text-2xl" : "text-[15px] line-clamp-2"}`}
+                  className="text-xl font-bold tracking-tight"
                   style={{ color: "var(--text-primary)" }}
                 >
-                  {article.title}
+                  {category}
                 </h2>
-
-                {/* Summary */}
-                <p
-                  className={`leading-relaxed flex-1 mb-5 ${i === 0 ? "text-[15px] max-w-3xl" : "text-[13px] line-clamp-3"}`}
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  {article.summary}
-                </p>
-
-                {/* CTA */}
                 <span
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold"
-                  style={{ color: "var(--accent-text)" }}
+                  className="text-xs font-medium px-2 py-0.5 rounded-full"
+                  style={{
+                    background: "var(--badge-bg)",
+                    color: "var(--text-muted)",
+                    border: "1px solid var(--badge-border)",
+                  }}
                 >
-                  {i === 0 ? "Read full article" : "Read more"}
-                  <svg
-                    className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
+                  {grouped[category].length}
                 </span>
-              </a>
-            ))}
-          </div>
-        )}
+              </div>
+
+              {/* Category Articles */}
+              <div className="grid gap-4 lg:grid-cols-2">
+                {grouped[category].map((article) => (
+                  <a
+                    key={article.id}
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex flex-col rounded-2xl p-5 article-card animate-fade-up"
+                  >
+                    {/* Meta */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+                        style={{
+                          background:
+                            CATEGORY_COLORS[category] || "#6b7280",
+                        }}
+                      >
+                        {category}
+                      </span>
+                      <span
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                        style={{
+                          background: "var(--badge-bg)",
+                          color: "var(--badge-text)",
+                          border: "1px solid var(--badge-border)",
+                        }}
+                      >
+                        {article.source}
+                      </span>
+                      <span
+                        className="text-[11px] font-medium"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        {timeAgo(article.published_at)}
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h3
+                      className="text-[15px] font-semibold leading-snug mb-2 line-clamp-2"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {article.title}
+                    </h3>
+
+                    {/* Summary */}
+                    <p
+                      className="text-[13px] leading-relaxed flex-1 line-clamp-3 mb-4"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      {article.summary}
+                    </p>
+
+                    {/* CTA */}
+                    <span
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold"
+                      style={{ color: "var(--accent-text)" }}
+                    >
+                      Read more
+                      <svg
+                        className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                        />
+                      </svg>
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          ))}
       </main>
 
       {/* Pipeline Section */}
@@ -296,7 +397,7 @@ export default async function Home() {
         className="py-16"
         style={{ borderTop: "1px solid var(--border)" }}
       >
-        <div className="mx-auto max-w-4xl px-5">
+        <div className="mx-auto max-w-5xl px-5">
           <div className="text-center mb-10">
             <h2
               className="text-2xl font-bold tracking-tight mb-2"
@@ -308,34 +409,43 @@ export default async function Home() {
               Fully autonomous, from source to screen
             </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {[
               {
                 num: "01",
                 title: "Discover",
-                desc: "Fetches articles from Google News RSS every 5 hours.",
+                desc: "Fetches from Google News RSS every 5 hours.",
                 icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z",
               },
               {
                 num: "02",
                 title: "Summarize",
-                desc: "AI generates concise 2-sentence summaries via Ollama Cloud.",
+                desc: "AI generates concise summaries via Ollama Cloud.",
                 icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z",
               },
               {
                 num: "03",
-                title: "Store",
-                desc: "Persisted to Supabase with automatic duplicate detection.",
-                icon: "M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125",
+                title: "Categorize",
+                desc: "Auto-tags articles into AI Models, Business, Policy, etc.",
+                icon: "M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z",
               },
               {
                 num: "04",
+                title: "Store",
+                desc: "Persisted to Supabase with duplicate detection.",
+                icon: "M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375",
+              },
+              {
+                num: "05",
                 title: "Publish",
-                desc: "Rendered with Next.js on Vercel with Telegram alerts.",
+                desc: "Rendered with Next.js on Vercel + Telegram alerts.",
                 icon: "M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z",
               },
             ].map((step) => (
-              <div key={step.num} className="rounded-2xl p-5 pipeline-step text-center">
+              <div
+                key={step.num}
+                className="rounded-2xl p-5 pipeline-step text-center"
+              >
                 <div
                   className="mx-auto h-10 w-10 rounded-xl flex items-center justify-center mb-3"
                   style={{ background: "var(--accent-soft)" }}
@@ -348,7 +458,11 @@ export default async function Home() {
                     strokeWidth={1.5}
                     style={{ color: "var(--accent)" }}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d={step.icon} />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d={step.icon}
+                    />
                   </svg>
                 </div>
                 <h3
@@ -372,7 +486,7 @@ export default async function Home() {
       {/* Footer */}
       <footer style={{ borderTop: "1px solid var(--border)" }}>
         <div
-          className="mx-auto max-w-4xl px-5 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"
+          className="mx-auto max-w-5xl px-5 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"
           style={{ color: "var(--text-muted)" }}
         >
           <div className="flex items-center gap-2.5">

@@ -14,6 +14,7 @@ async function insertArticle(article) {
   const { error } = await supabase.from("articles").insert({
     title: article.title,
     summary: article.summary,
+    category: article.category || "General",
     url: article.url,
     source: article.source,
     published_at: article.published_at,
