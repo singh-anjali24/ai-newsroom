@@ -1,6 +1,6 @@
 const { fetchArticles } = require("./rssFetcher");
 const { generateSummary } = require("./summarizer");
-const { insertArticle } = require("./dbWriter");
+const { insertArticle, recordPipelineRun } = require("./dbWriter");
 
 /**
  * Main orchestrator agent.
@@ -42,6 +42,11 @@ async function run() {
       console.log("");
     }
   }
+
+  await recordPipelineRun({
+    articlesFound: articles.length,
+    articlesInserted: inserted,
+  });
 
   console.log(
     `[Agent] Pipeline complete — ${inserted} inserted, ${skipped} skipped\n`

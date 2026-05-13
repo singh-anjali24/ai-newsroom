@@ -13,3 +13,11 @@ CREATE TABLE IF NOT EXISTS articles (
 
 -- Index for faster ordering by publish date
 CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles (published_at DESC);
+
+-- Tracks pipeline execution times (single row, upserted on each run)
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+  id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  last_run_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  articles_found INT DEFAULT 0,
+  articles_inserted INT DEFAULT 0
+);

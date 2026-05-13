@@ -31,4 +31,27 @@ async function insertArticle(article) {
   return { success: true };
 }
 
-module.exports = { insertArticle };
+/**
+ * Records a pipeline run timestamp with stats.
+ * Upserts a single row (id=1) so we always know when the last run happened,
+ * regardless of whether new articles were found.
+ */
+async function recordPipelineRun({ articlesFound, articlesInserted }) {
+  const { error } = await supabase.from("pipeline_runs").upsert(
+    {
+      id: 1,
+      last_run_at: new Date().toISOString(),
+      articles_found: articlesFound,
+      articles_inserted: articlesInserted,
+    },
+    { onConflict: "id" }
+  );
+
+  if (error) {
+    console.error("[DB] Failed to record pipeline run:", error.message);
+  } else {
+    console.log("[DB] Pipeline run recorded");
+  }
+}
+
+module.exports = { insertArticle, recordPipelineRun };
