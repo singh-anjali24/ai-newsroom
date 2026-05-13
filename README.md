@@ -20,9 +20,10 @@ Google News RSS
   ┌────┴─────┐
   |  Agents  |
   |----------|
-  | Fetcher  |──→ RSS Feed
-  | Summarizer|──→ Ollama Cloud (ministral-3:3b)
-  | DB Writer |──→ Supabase
+  | Fetcher    |──→ RSS Feed
+  | Summarizer |──→ Ollama Cloud (ministral-3:8b)
+  | Categorizer|──→ Keyword classification
+  | DB Writer  |──→ Supabase
   └────┬─────┘
        |
   Supabase (PostgreSQL)
@@ -37,7 +38,7 @@ Google News RSS
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | Runtime | OpenClaw | Multi-agent orchestration on VPS |
-| LLM | Ollama Cloud | AI summarization (ministral-3:3b) |
+| LLM | Ollama Cloud | AI summarization (ministral-3:8b) |
 | Database | Supabase | PostgreSQL storage for articles |
 | Frontend | Next.js 16 | Server-rendered React app with dark/light theme |
 | Hosting | Vercel | Production deployment with CI/CD |
@@ -49,10 +50,12 @@ The pipeline is split into cooperating agents, each with a single responsibility
 
 | Agent | File | Role |
 |-------|------|------|
-| RSS Fetcher | `agent/agents/rssFetcher.js` | Collects articles from Google News RSS |
+| RSS Fetcher | `agent/agents/rssFetcher.js` | Collects articles from multiple Google News RSS feeds |
 | Summarizer | `agent/agents/summarizer.js` | Generates 2-sentence AI summaries via Ollama Cloud |
+| Categorizer | `agent/agents/categorizer.js` | Auto-tags articles (AI Models, Business, Policy, Research, Ethics, Products) |
 | DB Writer | `agent/agents/dbWriter.js` | Inserts articles into Supabase, handles duplicates |
-| Orchestrator | `agent/agents/newsAgent.js` | Coordinates fetch → summarize → store |
+| Health Check | `agent/runners/health.js` | Monitors Supabase, Ollama Cloud, ingestion recency, VPS uptime |
+| Orchestrator | `agent/agents/newsAgent.js` | Coordinates fetch → summarize → categorize → store |
 
 Each agent is also exposed as an OpenClaw skill, invocable via Telegram:
 
@@ -72,6 +75,7 @@ ai-newsroom/
 │   ├── agents/                # Core agent modules
 │   │   ├── rssFetcher.js      # RSS collection agent
 │   │   ├── summarizer.js      # AI summarization agent
+│   │   ├── categorizer.js     # Keyword-based article categorization
 │   │   ├── dbWriter.js        # Database storage agent
 │   │   └── newsAgent.js       # Orchestrator agent
 │   ├── runners/               # Standalone wrappers for OpenClaw skills
@@ -127,6 +131,7 @@ CREATE TABLE IF NOT EXISTS articles (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   title TEXT NOT NULL,
   summary TEXT,
+  category TEXT DEFAULT 'General',
   url TEXT NOT NULL UNIQUE,
   source TEXT,
   published_at TIMESTAMPTZ,
@@ -259,7 +264,7 @@ This entire system runs on free tiers with $0 spend:
 | Ollama Cloud | Free tier | $0 |
 | Telegram Bot | Free | $0 |
 
-The pipeline runs every 5 hours, processing 5 articles per run. With the ministral-3:3b model, token usage stays well within Ollama Cloud's free tier rate limits.
+The pipeline runs every 5 hours, processing articles from 3 RSS feeds. With the ministral-3:8b model, token usage stays well within Ollama Cloud's free tier rate limits. Article categorization uses keyword matching (zero LLM cost).
 
 ## License
 
