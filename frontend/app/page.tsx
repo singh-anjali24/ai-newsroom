@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import ThemeToggle from "@/components/ThemeToggle";
+import CategoryFilter from "@/components/CategoryFilter";
 
 export const dynamic = "force-dynamic";
 
@@ -25,36 +26,6 @@ function uniqueSources(articles: { source: string }[]): string[] {
   return [...new Set(articles.map((a) => a.source))];
 }
 
-interface Article {
-  id: number;
-  title: string;
-  summary: string;
-  category: string;
-  url: string;
-  source: string;
-  published_at: string;
-  created_at: string;
-}
-
-function groupByCategory(articles: Article[]): Record<string, Article[]> {
-  const groups: Record<string, Article[]> = {};
-  for (const article of articles) {
-    const cat = article.category || "General";
-    if (!groups[cat]) groups[cat] = [];
-    groups[cat].push(article);
-  }
-  return groups;
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  "AI Models": "#8b5cf6",
-  "Business": "#f59e0b",
-  "Policy & Regulation": "#ef4444",
-  "Research": "#06b6d4",
-  "Ethics & Safety": "#ec4899",
-  "Products & Tools": "#10b981",
-  "General": "#6b7280",
-};
 
 export default async function Home() {
   const [{ data: articles, error }, { data: pipelineRun }, { data: allSources }] =
@@ -78,17 +49,6 @@ export default async function Home() {
     articles?.[0]?.created_at ||
     articles?.[0]?.published_at;
   const sources = allSources ? uniqueSources(allSources) : [];
-  const grouped = articles ? groupByCategory(articles as Article[]) : {};
-  const categoryOrder = [
-    "AI Models",
-    "Business",
-    "Products & Tools",
-    "Policy & Regulation",
-    "Research",
-    "Ethics & Safety",
-    "General",
-  ];
-  const sortedCategories = categoryOrder.filter((c) => grouped[c]);
 
   return (
     <div
@@ -203,7 +163,6 @@ export default async function Home() {
             <div className="flex flex-wrap justify-center gap-3 mt-10">
               {[
                 { label: "Articles", value: articleCount.toString() },
-                { label: "Categories", value: sortedCategories.length.toString() },
                 { label: "Sources", value: sources.length.toString() },
                 { label: "Refresh", value: "5h" },
                 ...(lastUpdated
@@ -280,116 +239,10 @@ export default async function Home() {
           </div>
         )}
 
-        {/* Articles grouped by category */}
-        {!error &&
-          sortedCategories.map((category) => (
-            <section key={category} className="mb-12">
-              {/* Category Header */}
-              <div className="flex items-center gap-3 mb-5">
-                <div
-                  className="h-3 w-3 rounded-full"
-                  style={{
-                    background: CATEGORY_COLORS[category] || "#6b7280",
-                  }}
-                />
-                <h2
-                  className="text-xl font-bold tracking-tight"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  {category}
-                </h2>
-                <span
-                  className="text-xs font-medium px-2 py-0.5 rounded-full"
-                  style={{
-                    background: "var(--badge-bg)",
-                    color: "var(--text-muted)",
-                    border: "1px solid var(--badge-border)",
-                  }}
-                >
-                  {grouped[category].length}
-                </span>
-              </div>
-
-              {/* Category Articles */}
-              <div className="grid gap-4 lg:grid-cols-2">
-                {grouped[category].map((article) => (
-                  <a
-                    key={article.id}
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex flex-col rounded-2xl p-5 article-card animate-fade-up"
-                  >
-                    {/* Meta */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
-                        style={{
-                          background:
-                            CATEGORY_COLORS[category] || "#6b7280",
-                        }}
-                      >
-                        {category}
-                      </span>
-                      <span
-                        className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                        style={{
-                          background: "var(--badge-bg)",
-                          color: "var(--badge-text)",
-                          border: "1px solid var(--badge-border)",
-                        }}
-                      >
-                        {article.source}
-                      </span>
-                      <span
-                        className="text-[11px] font-medium"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        {timeAgo(article.published_at)}
-                      </span>
-                    </div>
-
-                    {/* Title */}
-                    <h3
-                      className="text-[15px] font-semibold leading-snug mb-2 line-clamp-2"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {article.title}
-                    </h3>
-
-                    {/* Summary */}
-                    <p
-                      className="text-[13px] leading-relaxed flex-1 line-clamp-3 mb-4"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {article.summary}
-                    </p>
-
-                    {/* CTA */}
-                    <span
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold"
-                      style={{ color: "var(--accent-text)" }}
-                    >
-                      Read more
-                      <svg
-                        className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-                        />
-                      </svg>
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </section>
-          ))}
+        {/* Articles with category tabs */}
+        {!error && articleCount > 0 && (
+          <CategoryFilter articles={articles!} />
+        )}
       </main>
 
       {/* Pipeline Section */}
