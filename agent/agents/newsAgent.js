@@ -22,29 +22,24 @@ async function run() {
   let skipped = 0;
 
   for (const item of articles) {
-    try {
-      console.log(`[Agent] Processing: ${item.title}`);
+    console.log(`[Agent] Processing: ${item.title}`);
 
-      const summary = await generateSummary(item.content);
+    const summary = await generateSummary(item.content);
 
-      const result = await insertArticle({
-        title: item.title,
-        summary,
-        url: item.url,
-        source: item.source,
-        published_at: item.published_at,
-      });
+    const result = await insertArticle({
+      title: item.title,
+      summary,
+      url: item.url,
+      source: item.source,
+      published_at: item.published_at,
+    });
 
-      if (result.success) {
-        console.log(`[Agent] Inserted successfully\n`);
-        inserted++;
-      } else {
-        skipped++;
-        console.log("");
-      }
-    } catch (err) {
-      console.error(`[Agent] Error processing "${item.title}":`, err.message);
+    if (result.success) {
+      console.log(`[Agent] Inserted successfully\n`);
+      inserted++;
+    } else {
       skipped++;
+      console.log("");
     }
   }
 
