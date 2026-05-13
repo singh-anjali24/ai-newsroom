@@ -14,6 +14,11 @@ const ARTICLES_PER_FEED = 10;
  * Fetches AI news from multiple RSS feeds and deduplicates by URL.
  * Returns up to ARTICLES_PER_FEED * feeds items with normalized fields.
  */
+function extractSource(title, fallback) {
+  const match = title?.match(/ - ([^-]+)$/);
+  return match ? match[1].trim() : fallback;
+}
+
 async function fetchArticles() {
   const seen = new Set();
   const articles = [];
@@ -24,11 +29,12 @@ async function fetchArticles() {
       for (const item of feed.items.slice(0, ARTICLES_PER_FEED)) {
         if (seen.has(item.link)) continue;
         seen.add(item.link);
+        const source = item.source?.title || extractSource(item.title, defaultSource);
         articles.push({
           title: item.title,
           content: item.contentSnippet || item.title,
           url: item.link,
-          source: item.source?.title || defaultSource,
+          source,
           published_at: item.pubDate,
         });
       }

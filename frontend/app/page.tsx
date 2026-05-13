@@ -26,7 +26,7 @@ function uniqueSources(articles: { source: string }[]): string[] {
 }
 
 export default async function Home() {
-  const [{ data: articles, error }, { data: pipelineRun }] = await Promise.all([
+  const [{ data: articles, error }, { data: pipelineRun }, { data: allSources }] = await Promise.all([
     supabase
       .from("articles")
       .select("*")
@@ -37,11 +37,14 @@ export default async function Home() {
       .select("last_run_at, articles_found, articles_inserted")
       .eq("id", 1)
       .single(),
+    supabase
+      .from("articles")
+      .select("source"),
   ]);
 
   const articleCount = articles?.length ?? 0;
   const lastUpdated = pipelineRun?.last_run_at || articles?.[0]?.created_at || articles?.[0]?.published_at;
-  const sources = articles ? uniqueSources(articles) : [];
+  const sources = allSources ? uniqueSources(allSources) : [];
 
   return (
     <div className="min-h-screen font-sans" style={{ background: "var(--bg)" }}>
