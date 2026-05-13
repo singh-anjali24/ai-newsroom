@@ -7,7 +7,7 @@ const ollama = new Ollama({
   },
 });
 
-const MODEL = "llama3.2:1b";
+const MODEL = "qwen3.5:0.8b";
 
 /**
  * Generates a concise 2-sentence summary of the given text using Ollama Cloud.
